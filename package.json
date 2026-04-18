@@ -5,5 +5,8 @@
   "workspaces": [
     "web",
     "server"
-  ]
+  ],
+  "devDependencies": {
+    "@types/bun": "^1.3.12"
+  }
 }
