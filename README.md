@@ -29,7 +29,7 @@ bun run dev       # development (watch mode)
 bun run start     # production
 ```
 
-The server starts on **http://localhost:3000**.
+The server starts on **http://localhost:8000**.
 
 ### 3. Start the web frontend
 
@@ -40,7 +40,7 @@ cd web
 bun run dev
 ```
 
-The UI is available at **http://localhost:3001** (Next.js default).
+The UI is available at **http://localhost:3000** (Next.js default).
 
 ### 4. Send events
 
