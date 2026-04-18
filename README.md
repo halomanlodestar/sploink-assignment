@@ -45,7 +45,7 @@ The UI is available at **http://localhost:3000** (Next.js default).
 ### 4. Send events
 
 ```bash
-curl -X POST http://localhost:3000/events \
+curl -X POST http://localhost:8000/events \
   -H "Content-Type: application/json" \
   -d '{
     "session_id": "agent-42",
@@ -59,6 +59,52 @@ curl -X POST http://localhost:3000/events \
 ```
 
 You can also POST an array of events in a single request.
+
+### 5. Run the agent simulator
+
+`agent.py` is a Python CLI that generates realistic event streams and sends them to the server. It requires Python 3 (stdlib only — no dependencies to install).
+
+**Single scenario — send directly to the server:**
+
+```bash
+# Healthy agent — logical progression of steps
+python agent.py --scenario normal --send http://localhost:8000
+
+# Agent stuck in a behavioral loop
+python agent.py --scenario loop --send http://localhost:8000
+
+# Agent that drifts mid-session (auth → deployment)
+python agent.py --scenario drift --send http://localhost:8000
+
+# Agent with escalating failures / retries
+python agent.py --scenario failure --send http://localhost:8000
+```
+
+**Mixed / all scenarios in one shot:**
+
+```bash
+# Interleaved stream from all 4 scenarios (multiple concurrent sessions)
+python agent.py --scenario mixed --send http://localhost:8000
+
+# All 4 scenarios as separate sessions, written to a file
+python agent.py --scenario all --output events.json
+```
+
+**Continuous burst mode** (stress-tests debounce and burst handling):
+
+```bash
+# 3 concurrent sessions, random batches, until Ctrl+C
+python agent.py --burst --send http://localhost:8000 --burst-sessions 3
+```
+
+**Other flags:**
+
+| Flag                 | Default | Description                                                                  |
+| -------------------- | ------- | ---------------------------------------------------------------------------- |
+| `--seed N`           | `42`    | Random seed for reproducibility                                              |
+| `--no-noise`         | off     | Skip edge-case injection (duplicates, out-of-order events, missing metadata) |
+| `--output FILE`      | stdout  | Write JSON event array to a file instead of sending                          |
+| `--burst-sessions N` | `3`     | Number of concurrent sessions in burst mode                                  |
 
 ---
 
