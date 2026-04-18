@@ -6,16 +6,6 @@ export type ActionType =
   | "run_command"
   | "llm_call";
 
-export interface RawEvent {
-  session_id?: unknown;
-  timestamp?: unknown;
-  step?: unknown;
-  action?: unknown;
-  input?: unknown;
-  output?: unknown;
-  metadata?: unknown;
-}
-
 export interface Event {
   session_id: string;
   timestamp: number;

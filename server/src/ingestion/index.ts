@@ -1,63 +1,36 @@
 /** @format */
 
-import type { RawEvent, Event, ActionType } from "../types.ts";
+import { z } from "zod";
+import type { Event } from "../types.ts";
 import { SessionStore } from "../store.ts";
 import { CONFIG } from "../config.ts";
 import { eventDedupKey } from "./dedup.ts";
 import { sortedInsert } from "./reorder.ts";
 
-const VALID_ACTIONS = new Set<string>([
-  "read_file",
-  "write_file",
-  "run_command",
-  "llm_call",
-]);
+const RawEventSchema = z.object({
+  session_id: z.string().trim().min(1),
+  timestamp: z.number().default(() => Date.now()),
+  step: z.number().transform(Math.floor).default(0),
+  action: z
+    .enum(["read_file", "write_file", "run_command", "llm_call"])
+    .default("run_command"),
+  input: z.string().default(""),
+  output: z.string().default(""),
+  metadata: z
+    .object({
+      file: z.string().nullable().default(null),
+      status: z.enum(["success", "failure"]).default("success"),
+    })
+    .default({ file: null, status: "success" }),
+});
 
-function normalize(raw: RawEvent): Event | null {
-  const session_id =
-    typeof raw.session_id === "string" && raw.session_id.trim()
-      ? raw.session_id.trim()
-      : null;
-
-  if (!session_id) return null;
-
-  const timestamp =
-    typeof raw.timestamp === "number" && isFinite(raw.timestamp)
-      ? raw.timestamp
-      : Date.now();
-
-  const step =
-    typeof raw.step === "number" && isFinite(raw.step)
-      ? Math.floor(raw.step)
-      : 0;
-
-  const action: ActionType =
-    typeof raw.action === "string" && VALID_ACTIONS.has(raw.action)
-      ? (raw.action as ActionType)
-      : "run_command";
-
-  const input = typeof raw.input === "string" ? raw.input : "";
-  const output = typeof raw.output === "string" ? raw.output : "";
-
-  const meta =
-    raw.metadata && typeof raw.metadata === "object"
-      ? (raw.metadata as Record<string, unknown>)
-      : {};
-  const status = meta.status === "failure" ? "failure" : "success";
-  const file = typeof meta.file === "string" ? meta.file : null;
-
-  return {
-    session_id,
-    timestamp,
-    step,
-    action,
-    input,
-    output,
-    metadata: { file, status },
-  };
+function normalize(raw: unknown): Event | null {
+  const result = RawEventSchema.safeParse(raw);
+  if (!result.success) return null;
+  return result.data;
 }
 
-export function ingestEvent(raw: RawEvent, store: SessionStore): Event | null {
+export function ingestEvent(raw: unknown, store: SessionStore): Event | null {
   const event = normalize(raw);
   if (!event) return null;
 

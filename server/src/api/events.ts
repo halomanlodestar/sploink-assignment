@@ -1,6 +1,5 @@
 /** @format */
 
-import type { RawEvent } from "../types.ts";
 import type { SessionStore } from "../store.ts";
 import type { DetectionEngine } from "../detection/index.ts";
 import { ingestEvent } from "../ingestion/index.ts";
@@ -18,7 +17,7 @@ export async function handlePostEvents(
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const raws: RawEvent[] = Array.isArray(body) ? body : [body];
+  const raws: unknown[] = Array.isArray(body) ? body : [body];
 
   if (raws.length === 0) {
     return Response.json({ error: "Empty event array" }, { status: 400 });
@@ -28,7 +27,7 @@ export async function handlePostEvents(
   let dropped = 0;
 
   for (const raw of raws) {
-    const event = ingestEvent(raw as RawEvent, store);
+    const event = ingestEvent(raw, store);
     if (event) {
       const session = store.get(event.session_id)!;
       engine.onEvent(session, event);
