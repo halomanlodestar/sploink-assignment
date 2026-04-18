@@ -4,8 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dev": "bun --watch index.ts",
     "start": "bun run index.ts",
-    "dev": "bun --watch index.ts"
+    "build": "bun build index.ts --outdir dist",
+    "serve": "bun run dist"
   },
   "peerDependencies": {
     "typescript": "^5"
