@@ -10,8 +10,7 @@ A real-time monitoring system for AI agents that ingests event streams, detects 
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (server runtime)
-- [Node.js](https://nodejs.org) v18+ (for the web frontend)
+- [Bun](https://bun.sh)
 
 ### 1. Install dependencies
 
@@ -38,7 +37,7 @@ In a separate terminal:
 
 ```bash
 cd web
-npm run dev       # or: bun run dev
+bun run dev
 ```
 
 The UI is available at **http://localhost:3001** (Next.js default).
@@ -98,15 +97,15 @@ POST /events
 
 ### Key components
 
-| Path | Responsibility |
-|------|---------------|
+| Path                    | Responsibility                           |
+| ----------------------- | ---------------------------------------- |
 | `server/src/ingestion/` | Validation, deduplication, sorted insert |
-| `server/src/detection/` | Loop, drift, and failure detectors |
-| `server/src/store.ts` | In-memory `SessionStore` (one Map) |
-| `server/src/metrics.ts` | Per-session metric computation |
-| `server/src/api/` | HTTP route handlers |
-| `server/index.ts` | `Bun.serve` entry point, route wiring |
-| `web/src/` | Next.js 16 frontend (App Router) |
+| `server/src/detection/` | Loop, drift, and failure detectors       |
+| `server/src/store.ts`   | In-memory `SessionStore` (one Map)       |
+| `server/src/metrics.ts` | Per-session metric computation           |
+| `server/src/api/`       | HTTP route handlers                      |
+| `server/index.ts`       | `Bun.serve` entry point, route wiring    |
+| `web/src/`              | Next.js 16 frontend (App Router)         |
 
 ### Event lifecycle
 
@@ -138,7 +137,7 @@ $$\text{score} = \frac{\max_{n,\text{gram}}(\text{count}(gram) \times n)}{\text{
 
 ### Drift Detection
 
-**Goal**: identify when an agent changes its intent or direction mid-session — not just action types, but *what* it is doing with them.
+**Goal**: identify when an agent changes its intent or direction mid-session — not just action types, but _what_ it is doing with them.
 
 **Algorithm**: the event list is split into two disjoint slices — all events except the last 15 (historical) and the last 15 (recent). For each slice a feature vector is built: action-type frequencies (4 dimensions, normalized) concatenated with top-20 input keyword frequencies (stop-words stripped, normalized). **Cosine similarity** is computed between the two vectors.
 
@@ -158,11 +157,11 @@ $$\text{similarity} = \frac{\vec{A} \cdot \vec{B}}{|\vec{A}||\vec{B}|}$$
 
 Three independent signals are computed:
 
-| Signal | Mechanism | Threshold |
-|--------|-----------|-----------|
-| **EMA** | `ema = 0.3 × result + 0.7 × ema`, initialized from first 5 events | `ema < 0.4` |
-| **Retry pattern** | Same normalized fingerprint fails ≥ 2 times within the last 30 events | Fires immediately |
-| **Consecutive streak** | Simple counter, resets on success | `streak ≥ 3` |
+| Signal                 | Mechanism                                                             | Threshold         |
+| ---------------------- | --------------------------------------------------------------------- | ----------------- |
+| **EMA**                | `ema = 0.3 × result + 0.7 × ema`, initialized from first 5 events     | `ema < 0.4`       |
+| **Retry pattern**      | Same normalized fingerprint fails ≥ 2 times within the last 30 events | Fires immediately |
+| **Consecutive streak** | Simple counter, resets on success                                     | `streak ≥ 3`      |
 
 **Composite rule**:
 
@@ -178,7 +177,7 @@ Retry alone is a precise signal (stuck on one operation). EMA alone is not (coul
 
 ### Status and Secondary Signals
 
-A session's primary `status` is `"looping"`, `"drifting"`, `"failing"`, or `"healthy"` (in priority order). If a session is failing *because* it is also looping, both pieces of information are preserved: `{ status: "failing", secondary_signals: ["looping"] }`.
+A session's primary `status` is `"looping"`, `"drifting"`, `"failing"`, or `"healthy"` (in priority order). If a session is failing _because_ it is also looping, both pieces of information are preserved: `{ status: "failing", secondary_signals: ["looping"] }`.
 
 ---
 
