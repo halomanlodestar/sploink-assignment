@@ -1,0 +1,9 @@
+{
+  "name": "sploink-assignment",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "web",
+    "server"
+  ]
+}
