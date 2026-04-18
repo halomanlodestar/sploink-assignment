@@ -1,65 +1,118 @@
-import Image from "next/image";
+/** @format */
 
-export default function Home() {
+import Link from "next/link";
+import { getSessions } from "@/lib/api";
+import { StatusBadge } from "@/components/StatusBadge";
+import { EventFileUpload } from "@/components/EventFileUpload";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  let sessions;
+  try {
+    sessions = await getSessions();
+  } catch {
+    sessions = null;
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="max-w-5xl mx-auto px-6 py-10">
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Agent Monitor
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-muted-foreground mt-1">
+            Live session activity across all agent runs
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <EventFileUpload />
+      </div>
+
+      {sessions === null ? (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-6 py-8 text-center text-sm text-destructive">
+          Could not connect to the server. Make sure the backend is running on{" "}
+          <code className="font-mono">localhost:3000</code>.
         </div>
-      </main>
-    </div>
+      ) : sessions.length === 0 ? (
+        <div className="rounded-lg border border-dashed px-6 py-12 text-center text-sm text-muted-foreground">
+          No sessions yet. Send some events to{" "}
+          <code className="font-mono">POST /events</code>.
+        </div>
+      ) : (
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Session ID</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Events</TableHead>
+                <TableHead>Success Rate</TableHead>
+                <TableHead>Actions</TableHead>
+                <TableHead>Signals</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sessions.map((s) => (
+                <TableRow key={s.session_id}>
+                  <TableCell className="font-mono text-xs">
+                    <Link
+                      href={`/sessions/${encodeURIComponent(s.session_id)}`}
+                      className="hover:underline text-foreground"
+                    >
+                      {s.session_id}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={s.status} />
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {s.event_count}
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {(s.metrics.successRatio * 100).toFixed(0)}%
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(s.metrics.actionDistribution).map(
+                        ([action, pct]) => (
+                          <span
+                            key={action}
+                            className="text-xs text-muted-foreground font-mono"
+                          >
+                            {action.replace("_", " ")}{" "}
+                            <span className="text-foreground">
+                              {(pct * 100).toFixed(0)}%
+                            </span>
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {s.secondary_signals.map((sig) => (
+                        <Badge key={sig} variant="outline" className="text-xs">
+                          {sig}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </main>
   );
 }

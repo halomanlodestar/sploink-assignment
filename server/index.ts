@@ -8,7 +8,7 @@ import { handleGetSessions, handleGetSession } from "./src/api/sessions.ts";
 const store = new SessionStore();
 const engine = new DetectionEngine();
 
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = Number(process.env.PORT ?? 8000);
 
 Bun.serve({
   port: PORT,
