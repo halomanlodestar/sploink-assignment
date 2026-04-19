@@ -21,7 +21,7 @@ export interface Event {
 
 export interface LoopState {
   /**
-   * circular buffer of fingerprints, max W=30
+   * ring buffer of fingerprints, max W=30
    */
   buffer: string[];
   bufferFill: number;

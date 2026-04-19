@@ -27,7 +27,9 @@ export async function handlePostEvents(
   let dropped = 0;
 
   for (const raw of raws) {
+    // null value indicates invalid event (bad format or duplicate)
     const event = ingestEvent(raw, store);
+
     if (event) {
       const session = store.get(event.session_id)!;
       engine.onEvent(session, event);

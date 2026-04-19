@@ -5,6 +5,7 @@ import path from "node:path";
 const UUID_RE =
   /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 const DIGITS_RE = /\d+/g;
+const NONWORD_RE = /[^a-z\s]+/g;
 const WHITESPACE_RE = /\s+/g;
 
 function normalizeInput(input: string): string {
@@ -17,6 +18,7 @@ function normalizeInput(input: string): string {
 
   s = s.replace(UUID_RE, "");
   s = s.replace(DIGITS_RE, "");
+  s = s.replace(NONWORD_RE, " ");
   s = s.replace(WHITESPACE_RE, " ").trim();
 
   return s.split(" ").filter(Boolean).slice(0, 5).join(" ");

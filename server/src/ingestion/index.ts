@@ -32,12 +32,15 @@ function normalize(raw: unknown): Event | null {
 
 export function ingestEvent(raw: unknown, store: SessionStore): Event | null {
   const event = normalize(raw);
+
   if (!event) return null;
 
   const session = store.getOrCreate(event.session_id);
 
   const key = eventDedupKey(event);
+
   if (session.dedupSet.has(key)) return null;
+
   session.dedupSet.add(key);
 
   sortedInsert(session.events, event);
